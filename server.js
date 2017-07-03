@@ -11,7 +11,7 @@ const sessionConfig = require(path.join(__dirname, "/sessionConfig.js"));
 const logger = require("morgan");
 
 const checkAuth = require(path.join(__dirname, "/middleware/checkAuth.js"));
-// const models = require(path.join(__dirname, "/models"));
+const models = require(path.join(__dirname, "/models"));
 
 // SET VIEW ENGINE
 app.engine("mustache", mustacheExpress());
@@ -27,30 +27,84 @@ app.use(logger("dev"));
 // ROUTES
 app.get("/", (req, res) => {
   console.log(req.session);
-  res.render("index");
+  res.render("index", { errors: req.session.errors });
 });
 
 app.post("/login", (req, res) => {
-  res.send(req.body);
+  console.log(req.body);
+  delete req.session.errors;
+  models.user
+    .findOne({ where: { userName: req.body.username } })
+    .then(foundUser => {
+      //   console.log("username pass");
+      if (foundUser) {
+        models.user
+          .findOne({
+            where: { userName: req.body.username, password: req.body.password }
+          })
+          .then(validUser => {
+            //   console.log("password pass");
+            if (validUser) {
+              req.session.user = validUser.userName;
+              console.log("user session: ", req.session);
+              res.redirect("/profile");
+            } else {
+              req.session.errors = {
+                invalidPass: "This password does not match the username"
+              };
+              res.redirect("/");
+            }
+          });
+        //   .catch(error => {
+
+        //   });
+      } else {
+        req.session.errors = { invalidUser: "This username does not exist" };
+        res.redirect("/");
+      }
+    });
+  // .catch(error => {
+
+  // });
 });
 
 app.get("/signup", (req, res) => {
-  res.render("signup", { error: req.session.errors });
+  res.render("signup", { errors: req.session.errors });
 });
 
 app.post("/signup", (req, res) => {
   console.log(req.body);
-  if (!req.body.username || !req.body.firstPass || !req.body.confirmPass) {
+  delete req.session.errors;
+  if (
+    !req.body.username ||
+    !req.body.displayName ||
+    !req.body.password ||
+    !req.body.confirmPass
+  ) {
     req.session.errors = { incompleteData: "All fields must be completed" };
     res.redirect("/signup");
-  } else if (req.body.firstPass != req.body.confirmPass) {
+  } else if (req.body.password != req.body.confirmPass) {
     req.session.errors = {
       twoDiffPasswords: "Passwords in both fields must match"
     };
+    res.redirect("/signup");
   } else {
-    // check for new unique username
+    var newUser = models.user.build({
+      userName: req.body.username,
+      password: req.body.password,
+      displayName: req.body.displayName
+    });
+    newUser
+      .save()
+      .then(addedUser => {
+        req.session.user = { username: req.body.username };
+        res.redirect("/profile");
+      })
+      .catch(Sequelize.UniqueConstraintError, error => {
+        req.session.errors = { notNewUser: "This username is already taken" };
+        res.redirect("/signup");
+      });
   }
-  res.redirect("/");
 });
 
 app.get("/profile", checkAuth, (req, res) => {

@@ -15,6 +15,10 @@
         <input type="password" name="password" placeholder="password">
         <button type="submit">Login</button>
     </form>
+    {{#errors}}
+      {{#invalidUser}} <h4>{{invalidUser}}</h4> {{/invalidUser}}
+      {{#invalidPass}} <h4>{{invalidPass}}</h4> {{/invalidPass}}
+    {{/errors}}
     <h3>Not registered? <a href="/signup">Sign Up</a></h3>
 
 </body>
