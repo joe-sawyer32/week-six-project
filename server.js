@@ -7,7 +7,7 @@ const path = require("path");
 const mustacheExpress = require("mustache-express");
 const bodyParser = require("body-parser");
 const session = require("express-session");
-const sessionConfig = require(path.join(__dirname, "/sessionConfig"));
+const sessionConfig = require(path.join(__dirname, "/sessionConfig.js"));
 const logger = require("morgan");
 
 const checkAuth = require(path.join(__dirname, "/middleware/checkAuth.js"));
@@ -26,6 +26,7 @@ app.use(logger("dev"));
 
 // ROUTES
 app.get("/", (req, res) => {
+  console.log(req.session);
   res.render("index");
 });
 
@@ -34,10 +35,26 @@ app.post("/login", (req, res) => {
 });
 
 app.get("/signup", (req, res) => {
-  res.render("signup");
+  res.render("signup", { error: req.session.errors });
+});
+
+app.post("/signup", (req, res) => {
+  console.log(req.body);
+  if (!req.body.username || !req.body.firstPass || !req.body.confirmPass) {
+    req.session.errors = { incompleteData: "All fields must be completed" };
+    res.redirect("/signup");
+  } else if (req.body.firstPass != req.body.confirmPass) {
+    req.session.errors = {
+      twoDiffPasswords: "Passwords in both fields must match"
+    };
+  } else {
+    // check for new unique username
+  }
+  res.redirect("/");
 });
 
 app.get("/profile", checkAuth, (req, res) => {
+  console.log(req.session);
   res.render("profile");
 });
 

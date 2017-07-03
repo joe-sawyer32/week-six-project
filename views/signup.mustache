@@ -16,6 +16,11 @@
         <input type="password" name="confirmPass" placeholder="confirm password">
         <button type="submit">Sign Up</button>
     </form>
+    {{#errors}}
+      {{#incompleteData}} <h4>{{incompleteData}}</h4> {{/incompleteData}}
+      {{#notNewUser}} <h4>{{notNewUser}}</h4> {{/notNewUser}}
+      {{#twoDiffPasswords}} <h4>{{twoDiffPasswords}}</h4> {{/twoDiffPasswords}}
+    {{/errors}}
     <h3>Already registered? <a href="/">Log In</a></h3>
 </body>
 
