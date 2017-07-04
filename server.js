@@ -30,6 +30,7 @@ app.get("/", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
+  // need data validation functions for inputs
   delete req.session.errors;
   if (!req.body || !req.body.username || !req.body.password) {
     req.session.errors = { incompleteData: "All fields must be completed" };
@@ -40,10 +41,7 @@ app.post("/login", (req, res) => {
       .then(foundUser => {
         if (foundUser) {
           if (foundUser.password == req.body.password) {
-            req.session.user = {
-              username: foundUser.userName,
-              name: foundUser.displayName
-            };
+            req.session.user = { name: foundUser.displayName };
             res.redirect("/profile");
           } else {
             req.session.errors = {
@@ -56,6 +54,9 @@ app.post("/login", (req, res) => {
           req.session.errors = { invalidUser: "This username does not exist" };
           res.redirect("/");
         }
+      })
+      .catch(error => {
+        res.status(500).send(error);
       });
   }
 });
@@ -65,6 +66,7 @@ app.get("/signup", (req, res) => {
 });
 
 app.post("/signup", (req, res) => {
+  // need data validation functions for inputs
   delete req.session.errors;
   if (
     !req.body.username ||
@@ -88,12 +90,16 @@ app.post("/signup", (req, res) => {
     newUser
       .save()
       .then(addedUser => {
-        req.session.user = { username: req.body.username };
+        req.session.user = { name: req.body.displayName };
         res.redirect("/profile");
       })
-      .catch(Sequelize.UniqueConstraintError, error => {
-        req.session.errors = { notNewUser: "This username is already taken" };
-        res.redirect("/signup");
+      .catch(error => {
+        if (error.name == "SequelizeUniqueConstraintError") {
+          req.session.errors = { notNewUser: "This username is already taken" };
+          res.redirect("/signup");
+        } else {
+          res.status(500).send(error);
+        }
       });
   }
 });
@@ -101,6 +107,14 @@ app.post("/signup", (req, res) => {
 app.get("/profile", checkAuth, (req, res) => {
   console.log(req.session);
   res.render("profile", { name: req.session.user.name });
+});
+
+app.get("/create", checkAuth, (req, res) => {
+  res.render("create");
+});
+
+app.post("/message", checkAuth, (req, res) => {
+  res.send(req.body);
 });
 
 app.get("/logout", checkAuth, (req, res) => {
