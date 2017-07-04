@@ -26,46 +26,38 @@ app.use(logger("dev"));
 
 // ROUTES
 app.get("/", (req, res) => {
-  console.log(req.session);
   res.render("index", { errors: req.session.errors });
 });
 
 app.post("/login", (req, res) => {
-  console.log(req.body);
   delete req.session.errors;
-  models.user
-    .findOne({ where: { userName: req.body.username } })
-    .then(foundUser => {
-      //   console.log("username pass");
-      if (foundUser) {
-        models.user
-          .findOne({
-            where: { userName: req.body.username, password: req.body.password }
-          })
-          .then(validUser => {
-            //   console.log("password pass");
-            if (validUser) {
-              req.session.user = validUser.userName;
-              console.log("user session: ", req.session);
-              res.redirect("/profile");
-            } else {
-              req.session.errors = {
-                invalidPass: "This password does not match the username"
-              };
-              res.redirect("/");
-            }
-          });
-        //   .catch(error => {
-
-        //   });
-      } else {
-        req.session.errors = { invalidUser: "This username does not exist" };
-        res.redirect("/");
-      }
-    });
-  // .catch(error => {
-
-  // });
+  if (!req.body || !req.body.username || !req.body.password) {
+    req.session.errors = { incompleteData: "All fields must be completed" };
+    res.redirect("/");
+  } else {
+    models.user
+      .findOne({ where: { userName: req.body.username } })
+      .then(foundUser => {
+        if (foundUser) {
+          if (foundUser.password == req.body.password) {
+            req.session.user = {
+              username: foundUser.userName,
+              name: foundUser.displayName
+            };
+            res.redirect("/profile");
+          } else {
+            req.session.errors = {
+              invalidPass: "This password does not match the username"
+            };
+            res.redirect("/");
+          }
+          //     });
+        } else {
+          req.session.errors = { invalidUser: "This username does not exist" };
+          res.redirect("/");
+        }
+      });
+  }
 });
 
 app.get("/signup", (req, res) => {
@@ -73,7 +65,6 @@ app.get("/signup", (req, res) => {
 });
 
 app.post("/signup", (req, res) => {
-  console.log(req.body);
   delete req.session.errors;
   if (
     !req.body.username ||
@@ -109,7 +100,12 @@ app.post("/signup", (req, res) => {
 
 app.get("/profile", checkAuth, (req, res) => {
   console.log(req.session);
-  res.render("profile");
+  res.render("profile", { name: req.session.user.name });
+});
+
+app.get("/logout", checkAuth, (req, res) => {
+  req.session.destroy();
+  res.render("logout");
 });
 
 app.listen(port, () => {

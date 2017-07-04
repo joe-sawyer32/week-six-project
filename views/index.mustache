@@ -16,6 +16,7 @@
         <button type="submit">Login</button>
     </form>
     {{#errors}}
+      {{#incompleteData}} <h4>{{incompleteData}}</h4> {{/incompleteData}}
       {{#invalidUser}} <h4>{{invalidUser}}</h4> {{/invalidUser}}
       {{#invalidPass}} <h4>{{invalidPass}}</h4> {{/invalidPass}}
     {{/errors}}
