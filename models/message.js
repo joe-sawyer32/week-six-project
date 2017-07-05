@@ -3,7 +3,7 @@ module.exports = function(sequelize, DataTypes) {
   var message = sequelize.define("message", {
     body: {
       allowNull: false,
-      type: Sequelize.STRING
+      type: DataTypes.STRING
     }
   });
 

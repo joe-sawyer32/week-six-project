@@ -41,7 +41,10 @@ app.post("/login", (req, res) => {
       .then(foundUser => {
         if (foundUser) {
           if (foundUser.password == req.body.password) {
-            req.session.user = { name: foundUser.displayName };
+            req.session.user = {
+              id: foundUser.id,
+              name: foundUser.displayName
+            };
             res.redirect("/profile");
           } else {
             req.session.errors = {
@@ -90,7 +93,7 @@ app.post("/signup", (req, res) => {
     newUser
       .save()
       .then(addedUser => {
-        req.session.user = { name: req.body.displayName };
+        req.session.user = { id: addedUser.id, name: req.body.displayName };
         res.redirect("/profile");
       })
       .catch(error => {
@@ -105,8 +108,18 @@ app.post("/signup", (req, res) => {
 });
 
 app.get("/profile", checkAuth, (req, res) => {
-  console.log(req.session);
-  res.render("profile", { name: req.session.user.name });
+  models.message
+    .findAll({ include: [{ model: models.user, as: "author" }] })
+    .then(foundMessages => {
+      console.log(foundMessages);
+      res.render("profile", {
+        name: req.session.user.name,
+        messages: foundMessages
+      });
+    })
+    .catch(error => {
+      res.status(500).send(error);
+    });
 });
 
 app.get("/create", checkAuth, (req, res) => {
@@ -114,7 +127,20 @@ app.get("/create", checkAuth, (req, res) => {
 });
 
 app.post("/message", checkAuth, (req, res) => {
-  res.send(req.body);
+  var newMessage = models.message.build({
+    body: req.body.message,
+    authorId: req.session.user.id
+  });
+  newMessage
+    .save()
+    .then(addedMessage => {
+      console.log(addedMessage);
+      res.redirect("profile");
+    })
+    .catch(error => {
+      // more specific error handling
+      res.status(500).send(error);
+    });
 });
 
 app.get("/logout", checkAuth, (req, res) => {

@@ -1,24 +1,24 @@
 "use strict";
 module.exports = function(sequelize, DataTypes) {
-  var user = sequelize.define(
-    "user",
-    {
-      userName: {
-        allowNull: false,
-        unique: true,
-        type: DataTypes.STRING
-      },
-      password: {
-        allowNull: false,
-        type: DataTypes.STRING
-      },
-      displayName: {
-        allowNull: false,
-        type: DataTypes.STRING
-      }
+  var user = sequelize.define("user", {
+    userName: {
+      allowNull: false,
+      unique: true,
+      type: DataTypes.STRING
     },
-    {}
-    // user.associate goes here
-  );
+    password: {
+      allowNull: false,
+      type: DataTypes.STRING
+    },
+    displayName: {
+      allowNull: false,
+      type: DataTypes.STRING
+    }
+  });
+
+  user.associate = models => {
+    user.hasMany(models.message, { as: "messages", foreignKey: "authorId" });
+  };
+
   return user;
 };
