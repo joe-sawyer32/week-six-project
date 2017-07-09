@@ -13,13 +13,13 @@
     <h1>Welcome {{name}}</h1>
     <h3><a href="/create">New Gab</a></h3>
     {{#messages}}
-      <p id={{}}>{{body}}</p>
+      <p>{{body}}</p>
       <h4>{{createdAt}}</h4>
       {{#author}}
         <h4>{{displayName}}</h4>
       {{/author}}
       <form action="/like" method="post">
-        <button type="submit" value={{id}}>Like</button>
+        <button type="submit" name="message" value={{id}}>Like</button>
       </form>
     {{/messages}}
     <form action="/logout" method="get">

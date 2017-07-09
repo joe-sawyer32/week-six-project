@@ -24,6 +24,16 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(session(sessionConfig));
 app.use(logger("dev"));
 
+function parseMessages(messages) {
+  messages.forEach(msg => {
+    console.log(
+      `message ${msg.id}: ${msg.body} has `,
+      msg.likes.length,
+      ` likes`
+    );
+  });
+}
+
 // ROUTES
 app.get("/", (req, res) => {
   res.render("index", { errors: req.session.errors });
@@ -110,14 +120,24 @@ app.post("/signup", (req, res) => {
 app.get("/messages", checkAuth, (req, res) => {
   models.message
     .findAll({
-      include: [{ model: models.user, as: "author" }]
+      include: [
+        { model: models.user, as: "author", attributes: ["displayName"] },
+        {
+          model: models.like,
+          as: "likes",
+          attributes: ["likerId", "messageId"]
+        }
+      ],
+      order: [["createdAt", "DESC"]],
+      attributes: ["id", "body", "authorId", "createdAt"]
     })
     .then(foundMessages => {
-      console.log(foundMessages);
-      res.render("messages", {
-        name: req.session.user.name,
-        messages: foundMessages
-      });
+      parseMessages(foundMessages);
+      //   res.render("messages", {
+      //     name: req.session.user.name,
+      //     messages: foundMessages
+      //   });
+      res.send(foundMessages);
     })
     .catch(error => {
       res.status(500).send(error);
@@ -136,7 +156,6 @@ app.post("/message", checkAuth, (req, res) => {
   newMessage
     .save()
     .then(addedMessage => {
-      console.log(addedMessage);
       res.redirect("messages");
     })
     .catch(error => {
@@ -145,22 +164,21 @@ app.post("/message", checkAuth, (req, res) => {
     });
 });
 
-// app.post("/like", checkAuth, (req, res) => {
-//     var newLike = models.like.build({
-//     likerId: req.session.user.id
-//     messageId:
-//   });
-//   newMessage
-//     .save()
-//     .then(addedMessage => {
-//       console.log(addedMessage);
-//       res.redirect("messages");
-//     })
-//     .catch(error => {
-//       // more specific error handling
-//       res.status(500).send(error);
-//     });
-// });
+app.post("/like", checkAuth, (req, res) => {
+  var newLike = models.like.build({
+    likerId: req.session.user.id,
+    messageId: req.body.message
+  });
+  newLike
+    .save()
+    .then(() => {
+      res.redirect("messages");
+    })
+    .catch(error => {
+      // more specific error handling
+      res.status(500).send(error);
+    });
+});
 
 app.get("/logout", checkAuth, (req, res) => {
   req.session.destroy();
