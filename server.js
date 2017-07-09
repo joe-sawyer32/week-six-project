@@ -45,7 +45,7 @@ app.post("/login", (req, res) => {
               id: foundUser.id,
               name: foundUser.displayName
             };
-            res.redirect("/profile");
+            res.redirect("/messages");
           } else {
             req.session.errors = {
               invalidPass: "This password does not match the username"
@@ -94,7 +94,7 @@ app.post("/signup", (req, res) => {
       .save()
       .then(addedUser => {
         req.session.user = { id: addedUser.id, name: req.body.displayName };
-        res.redirect("/profile");
+        res.redirect("/messages");
       })
       .catch(error => {
         if (error.name == "SequelizeUniqueConstraintError") {
@@ -107,12 +107,14 @@ app.post("/signup", (req, res) => {
   }
 });
 
-app.get("/profile", checkAuth, (req, res) => {
+app.get("/messages", checkAuth, (req, res) => {
   models.message
-    .findAll({ include: [{ model: models.user, as: "author" }] })
+    .findAll({
+      include: [{ model: models.user, as: "author" }]
+    })
     .then(foundMessages => {
       console.log(foundMessages);
-      res.render("profile", {
+      res.render("messages", {
         name: req.session.user.name,
         messages: foundMessages
       });
@@ -135,13 +137,30 @@ app.post("/message", checkAuth, (req, res) => {
     .save()
     .then(addedMessage => {
       console.log(addedMessage);
-      res.redirect("profile");
+      res.redirect("messages");
     })
     .catch(error => {
       // more specific error handling
       res.status(500).send(error);
     });
 });
+
+// app.post("/like", checkAuth, (req, res) => {
+//     var newLike = models.like.build({
+//     likerId: req.session.user.id
+//     messageId:
+//   });
+//   newMessage
+//     .save()
+//     .then(addedMessage => {
+//       console.log(addedMessage);
+//       res.redirect("messages");
+//     })
+//     .catch(error => {
+//       // more specific error handling
+//       res.status(500).send(error);
+//     });
+// });
 
 app.get("/logout", checkAuth, (req, res) => {
   req.session.destroy();
