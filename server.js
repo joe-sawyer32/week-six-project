@@ -238,4 +238,5 @@ app.listen(port, () => {
 
 // group and modulize routes
 // rename routes for more clear CRUD cycle
+// modulize large code blocks
 // for each message: link to page displaying like count and all likers
