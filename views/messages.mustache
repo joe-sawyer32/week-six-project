@@ -10,21 +10,29 @@
 
 <body>
   {{#name}}
-    <h1>Welcome {{name}}</h1>
-    <h3><a href="/create">New Gab</a></h3>
+    <ul>
+      <li>Logged in as {{name}}</li>
+      <li><a href="/create">New Gab</a></li>
+      <li><a href="/logout">Logout</a></li>
+    </ul>
     {{#messages}}
       <p>{{body}}</p>
       <h4>{{createdAt}}</h4>
       {{#author}}
         <h4>{{displayName}}</h4>
       {{/author}}
-      <form action="/like" method="post">
-        <button type="submit" name="message" value={{id}}>Like</button>
-      </form>
+      {{^author}}
+        <h4>{{name}}</h4>
+        <form action="/delete" method="post">
+          <button type="submit" name="message" value={{id}}>Delete</button>
+        </form>
+      {{/author}}
+      {{#canLike}}
+        <form action="/like" method="post">
+          <button type="submit" name="message" value={{id}}>Like</button>
+        </form>
+      {{/canLike}}
     {{/messages}}
-    <form action="/logout" method="get">
-        <button type="submit">Logout</button>
-    </form>
   {{/name}}
 </body>
 

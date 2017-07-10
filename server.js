@@ -24,14 +24,26 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(session(sessionConfig));
 app.use(logger("dev"));
 
-function parseMessages(messages) {
-  messages.forEach(msg => {
-    console.log(
-      `message ${msg.id}: ${msg.body} has `,
-      msg.likes.length,
-      ` likes`
-    );
+function parseMessages(messages, user) {
+  var parsedMsgs = messages.map(msg => {
+    if (msg.dataValues.authorId == user) {
+      console.log("found a match: message #", msg.dataValues.id);
+      delete msg.dataValues.author;
+    } else {
+      let likesArr = msg.dataValues.likes;
+      let unlikedByUser = likesArr.every(item => {
+        return item.dataValues.likerId != user;
+      });
+      if (unlikedByUser) {
+        msg.dataValues.canLike = true;
+      }
+    }
+
+    msg.dataValues.likes = msg.likes.length;
+    return msg.dataValues;
   });
+
+  return parsedMsgs;
 }
 
 // ROUTES
@@ -125,19 +137,21 @@ app.get("/messages", checkAuth, (req, res) => {
         {
           model: models.like,
           as: "likes",
-          attributes: ["likerId", "messageId"]
+          attributes: ["likerId"]
         }
       ],
       order: [["createdAt", "DESC"]],
       attributes: ["id", "body", "authorId", "createdAt"]
     })
     .then(foundMessages => {
-      parseMessages(foundMessages);
-      //   res.render("messages", {
-      //     name: req.session.user.name,
-      //     messages: foundMessages
-      //   });
-      res.send(foundMessages);
+      var messageList = parseMessages(foundMessages, req.session.user.id);
+      console.log(messageList);
+      res.render("messages", {
+        name: req.session.user.name,
+        messages: messageList
+      });
+      //   res.send(foundMessages);
+      //   res.send(messageList);
     })
     .catch(error => {
       res.status(500).send(error);
