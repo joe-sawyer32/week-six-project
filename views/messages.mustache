@@ -18,18 +18,21 @@
     {{#messages}}
       <p>{{body}}</p>
       <h4>{{createdAt}}</h4>
+      {{#likes}}
+        <h4>Liked {{likes}} times so far</h4>
+      {{/likes}}
       {{#author}}
         <h4>{{displayName}}</h4>
       {{/author}}
       {{^author}}
         <h4>{{name}}</h4>
-        <form action="/delete" method="post">
-          <button type="submit" name="message" value={{id}}>Delete</button>
+        <form action="/delete/{{id}}" method="get">
+          <button type="submit">Delete</button>
         </form>
       {{/author}}
       {{#canLike}}
-        <form action="/like" method="post">
-          <button type="submit" name="message" value={{id}}>Like</button>
+        <form action="/like/{{id}}" method="post">
+          <button type="submit">Like</button>
         </form>
       {{/canLike}}
     {{/messages}}

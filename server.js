@@ -23,7 +23,7 @@ app.use("/", express.static(path.join(__dirname, "public")));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(session(sessionConfig));
 app.use(logger("dev"));
-
+// move to file and import
 function parseMessages(messages, user) {
   var parsedMsgs = messages.map(msg => {
     if (msg.dataValues.authorId == user) {
@@ -52,7 +52,7 @@ app.get("/", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  // need data validation functions for inputs
+  // need data validation functions for login inputs
   delete req.session.errors;
   if (!req.body || !req.body.username || !req.body.password) {
     req.session.errors = { incompleteData: "All fields must be completed" };
@@ -81,6 +81,7 @@ app.post("/login", (req, res) => {
         }
       })
       .catch(error => {
+        // more specific error messaging
         res.status(500).send(error);
       });
   }
@@ -123,6 +124,7 @@ app.post("/signup", (req, res) => {
           req.session.errors = { notNewUser: "This username is already taken" };
           res.redirect("/signup");
         } else {
+          // more specific error messaging
           res.status(500).send(error);
         }
       });
@@ -134,26 +136,20 @@ app.get("/messages", checkAuth, (req, res) => {
     .findAll({
       include: [
         { model: models.user, as: "author", attributes: ["displayName"] },
-        {
-          model: models.like,
-          as: "likes",
-          attributes: ["likerId"]
-        }
+        { model: models.like, as: "likes", attributes: ["likerId"] }
       ],
       order: [["createdAt", "DESC"]],
       attributes: ["id", "body", "authorId", "createdAt"]
     })
     .then(foundMessages => {
       var messageList = parseMessages(foundMessages, req.session.user.id);
-      console.log(messageList);
       res.render("messages", {
         name: req.session.user.name,
         messages: messageList
       });
-      //   res.send(foundMessages);
-      //   res.send(messageList);
     })
     .catch(error => {
+      // more specific error messaging
       res.status(500).send(error);
     });
 });
@@ -163,6 +159,7 @@ app.get("/create", checkAuth, (req, res) => {
 });
 
 app.post("/message", checkAuth, (req, res) => {
+  // need input validation (140 chars, etc.)
   var newMessage = models.message.build({
     body: req.body.message,
     authorId: req.session.user.id
@@ -173,15 +170,15 @@ app.post("/message", checkAuth, (req, res) => {
       res.redirect("messages");
     })
     .catch(error => {
-      // more specific error handling
+      // more specific error messaging
       res.status(500).send(error);
     });
 });
 
-app.post("/like", checkAuth, (req, res) => {
+app.post("/like/:id", checkAuth, (req, res) => {
   var newLike = models.like.build({
     likerId: req.session.user.id,
-    messageId: req.body.message
+    messageId: req.params.id
   });
   newLike
     .save()
@@ -189,7 +186,43 @@ app.post("/like", checkAuth, (req, res) => {
       res.redirect("messages");
     })
     .catch(error => {
-      // more specific error handling
+      // more specific error messaging
+      res.status(500).send(error);
+    });
+});
+
+app.get("/delete/:id", checkAuth, (req, res) => {
+  models.message
+    .findById(req.params.id)
+    .then(foundMessage => {
+      res.render("delete", {
+        name: req.session.user.name,
+        message: foundMessage
+      });
+      //   res.send(foundMessage);
+    })
+    .catch(error => {
+      // more specific error messaging
+      res.status(500).send(error);
+    });
+});
+
+app.post("/delete/:id", checkAuth, (req, res) => {
+  models.like
+    .destroy({ where: { messageId: req.params.id } })
+    .then(() => {
+      models.message
+        .destroy({ where: { id: req.params.id } })
+        .then(() => {
+          res.redirect("/messages");
+        })
+        .catch(error => {
+          // more specific error messaging
+          res.status(500).send(error);
+        });
+    })
+    .catch(error => {
+      // more specific error messaging
       res.status(500).send(error);
     });
 });
@@ -202,3 +235,7 @@ app.get("/logout", checkAuth, (req, res) => {
 app.listen(port, () => {
   console.log(`Spinning with express: Port ${port}`);
 });
+
+// group and modulize routes
+// rename routes for more clear CRUD cycle
+// for each message: link to page displaying like count and all likers

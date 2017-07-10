@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Gabble - Delete Message</title>
+</head>
+
+<body>
+  {{#name}}
+    <ul>
+      <li>Logged in as {{name}}</li>
+      <li><a href="/create">New Gab</a></li>
+      <li><a href="/logout">Logout</a></li>
+    </ul>
+    <h2>Are you sure you wish to permanently delete this message?</h2>
+    <h3>This process cannot be undone</h3>
+    {{#message}}
+      <p>{{body}}</p>
+      <h4>{{createdAt}}</h4>
+      <form action="/delete/{{id}}" method="post">
+        <button type=submit>Yes</button>
+      </form>
+      <form action="/messages" method="get">
+        <button type="submit">No</button>
+      </form>
+    {{/message}}
+  {{/name}}
+</body>
+
+</html>
