@@ -19,7 +19,10 @@
       <p>{{body}}</p>
       <h4>{{createdAt}}</h4>
       {{#likes}}
-        <h4>Liked {{likes}} times so far</h4>
+        <a href="/messages/{{id}}"><h4>Liked {{likes}} times so far</h4></a>
+      {{/likes}}
+      {{^likes}}
+        <a href="/messages/{{id}}"><h4>No likes yet...</h4></a>
       {{/likes}}
       {{#author}}
         <h4>{{displayName}}</h4>

@@ -27,7 +27,6 @@ app.use(logger("dev"));
 function parseMessages(messages, user) {
   var parsedMsgs = messages.map(msg => {
     if (msg.dataValues.authorId == user) {
-      console.log("found a match: message #", msg.dataValues.id);
       delete msg.dataValues.author;
     } else {
       let likesArr = msg.dataValues.likes;
@@ -158,7 +157,7 @@ app.get("/create", checkAuth, (req, res) => {
   res.render("create");
 });
 
-app.post("/message", checkAuth, (req, res) => {
+app.post("/messages", checkAuth, (req, res) => {
   // need input validation (140 chars, etc.)
   var newMessage = models.message.build({
     body: req.body.message,
@@ -168,6 +167,38 @@ app.post("/message", checkAuth, (req, res) => {
     .save()
     .then(addedMessage => {
       res.redirect("messages");
+    })
+    .catch(error => {
+      // more specific error messaging
+      res.status(500).send(error);
+    });
+});
+
+app.get("/messages/:id", checkAuth, (req, res) => {
+  models.message
+    .findById(req.params.id, {
+      include: [
+        { model: models.user, as: "author", attributes: ["displayName"] },
+        {
+          model: models.like,
+          as: "likes",
+          include: {
+            model: models.user,
+            as: "liker",
+            attributes: ["displayName"]
+          },
+          order: [["createdAt", "DESC"]],
+          attributes: ["likerId"]
+        }
+      ],
+      attributes: ["id", "body", "authorId", "createdAt"]
+    })
+    .then(foundMessage => {
+      res.render("likes", {
+        name: req.session.user.name,
+        message: foundMessage
+      });
+      //   res.send(foundMessage);
     })
     .catch(error => {
       // more specific error messaging

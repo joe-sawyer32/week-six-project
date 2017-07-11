@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Gabble - Message Likes</title>
+</head>
+
+<body>
+  {{#name}}
+    <ul>
+      <li>Logged in as {{name}}</li>
+      <li><a href="/create">New Gab</a></li>
+      <li><a href="/logout">Logout</a></li>
+    </ul>
+    {{#message}}
+      <p>{{body}}</p>
+      <h4>{{createdAt}}</h4>
+      <h3>Liked This Gab:</h3>
+      <ul>
+        {{#likes}}
+          {{#liker}}
+            <li>{{displayName}}</li>
+          {{/liker}}
+        {{/likes}}
+      </ul>
+    {{/message}}
+  {{/name}}
+</body>
+
+</html>
